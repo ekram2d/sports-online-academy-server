@@ -31,6 +31,7 @@ async function run() {
     // Send a ping to confirm a successful connection
 
  const menudatabase =client.db('scools').collection('menu');
+ const cartsdatabase = client.db('scools').collection('carts')
      app.get('/data',async(req,res)=>{
 
       //const result = await collection.find().sort({ price: 1 }).toArray();
@@ -38,6 +39,18 @@ async function run() {
       res.send(result);
      })
 
+
+
+     // carts insert 
+
+
+     app.post('/carts',async(req,res)=>{
+
+      const item = req.body;
+      console.log(item);
+      const result = await cartsdatabase.insertOne(item);
+      res.send(result);
+     })
 
 
     await client.db("admin").command({ ping: 1 });
