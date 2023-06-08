@@ -27,37 +27,52 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-//     await client.connect();
+    //     await client.connect();
     // Send a ping to confirm a successful connection
 
- const menudatabase =client.db('scools').collection('menu');
- const cartsdatabase = client.db('scools').collection('carts')
-     app.get('/data',async(req,res)=>{
+    const menudatabase = client.db('scools').collection('menu');
+    const cartsdatabase = client.db('scools').collection('carts')
+    app.get('/data', async (req, res) => {
 
       //const result = await collection.find().sort({ price: 1 }).toArray();
-      const result=await menudatabase.find().sort({availableSeats : 1}).toArray();
+      const result = await menudatabase.find().sort({ availableSeats: 1 }).toArray();
       res.send(result);
-     })
+    })
 
 
 
-     // carts insert 
+    // class carts insert 
+
+    app.get('/carts', async (req, res) => {
+      const useremail = req.query.email;
+     
+      if (!useremail) {
+        res.send([]);
+      }
+      const query = { userEmail: useremail }
+      
+      const result = await cartsdatabase.find(query).toArray();
+      console.log('qu',result)
+      res.send(result);
 
 
-     app.post('/carts',async(req,res)=>{
+    })
+    app.post('/carts', async (req, res) => {
 
       const item = req.body;
-      console.log(item);
+      // console.log(item);
       const result = await cartsdatabase.insertOne(item);
       res.send(result);
-     })
+    })
+
+
 
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
-//     await client.close();
+    //     await client.close();
   }
 }
 run().catch(console.dir);
@@ -82,10 +97,10 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-      res.send('summer schools camp is starting ')
+  res.send('summer schools camp is starting ')
 })
 app.listen(port, () => {
 
 
-      console.log(`summer server is starting in port : ${port}`);
+  console.log(`summer server is starting in port : ${port}`);
 })
