@@ -1,4 +1,5 @@
 const express = require('express')
+const jwt = require('jsonwebtoken');
 const app = express();
 const cors = require('cors');
 require('dotenv').config();
@@ -33,6 +34,22 @@ async function run() {
     const menudatabase = client.db('scools').collection('menu');
     const cartsdatabase = client.db('scools').collection('carts')
     const userssdatabase = client.db('scools').collection('users')
+
+
+
+
+
+    //jwt token send
+
+    app.post('/jwt', (req, res) => {
+
+      const user = req.body;
+      const token = jwt.sign(user, env.process.ACCESS_TOKEN_SECRET, {
+        expiresIn: '1h'
+      })
+     res.send({token})
+    })
+
     app.get('/data', async (req, res) => {
 
       //const result = await collection.find().sort({ price: 1 }).toArray();
@@ -46,12 +63,12 @@ async function run() {
 
     app.get('/carts', async (req, res) => {
       const useremail = req.query.email;
-     
+
       if (!useremail) {
         res.send([]);
       }
       const query = { userEmail: useremail }
-      
+
       const result = await cartsdatabase.find(query).toArray();
       // console.log('qu',result)
       res.send(result);
@@ -68,9 +85,9 @@ async function run() {
 
 
 
-    app.delete('/carts/:id',async(req,res)=>{
+    app.delete('/carts/:id', async (req, res) => {
       const id = req.params.id;
-      const query ={_id : new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
       const result = await cartsdatabase.deleteOne(query);
       res.send(result);
     })
@@ -78,40 +95,40 @@ async function run() {
 
 
     // users collection 
-   
-    app.get('/users',async(req,res)=>{
 
-       const result = await userssdatabase.find().toArray();
-       res.send(result);
+    app.get('/users', async (req, res) => {
+
+      const result = await userssdatabase.find().toArray();
+      res.send(result);
     })
-   app.post('/users',async(req,res)=>{
-    const user = req.body;
-    const query = {email:user.email}
-    const existingUser = await userssdatabase.findOne(query);
-    // console.log('exit',existingUser);
-    if(existingUser) {
-      return res.send({message:'user already exists'})
-    }
-   
-    const result = await userssdatabase.insertOne(user);
-    res.send(result);
-   })
-   
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      const query = { email: user.email }
+      const existingUser = await userssdatabase.findOne(query);
+      // console.log('exit',existingUser);
+      if (existingUser) {
+        return res.send({ message: 'user already exists' })
+      }
 
-   app.patch('/users/admin/:id',async(req,res)=>{
-    
-    const id=req.params.id;
-    const filter = {_id: new ObjectId(id)};
-    const updateDoc = {
-      $set: {
-        role: req.body.field1
-      },
-    };
-// console.log(req.body.field1);
-    const result =await userssdatabase.updateOne(filter,updateDoc);
-    res.send(result);
+      const result = await userssdatabase.insertOne(user);
+      res.send(result);
+    })
 
-   })
+
+    app.patch('/users/admin/:id', async (req, res) => {
+
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: req.body.field1
+        },
+      };
+      // console.log(req.body.field1);
+      const result = await userssdatabase.updateOne(filter, updateDoc);
+      res.send(result);
+
+    })
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
