@@ -92,10 +92,10 @@ async function run() {
       if (!useremail) {
         res.send([]);
       }
-      const  decodedEmail = req.decoded.email;
-      if(useremail != decodedEmail){
-        
-         return res.status(403).send({ error: true, message: 'porviden access' })
+      const decodedEmail = req.decoded.email;
+      if (useremail != decodedEmail) {
+
+        return res.status(403).send({ error: true, message: 'porviden access' })
       }
       const query = { userEmail: useremail }
 
@@ -126,6 +126,8 @@ async function run() {
 
     // users collection 
 
+
+
     app.get('/users', async (req, res) => {
 
       const result = await userssdatabase.find().toArray();
@@ -143,7 +145,17 @@ async function run() {
       const result = await userssdatabase.insertOne(user);
       res.send(result);
     })
+    app.get('/users/admin/:email', verfyJWT, async (req, res) => {
+      const email = req.params.email;
+      if (req.decoded.email !== email) {
+        res.send({ admin: false })
+      }
+      const query = { email: email }
+      const user = await userssdatabase.findOne(query);
+      const result = { admin: user?.role === 'admin' }
+      res.send(result)
 
+    })
 
     app.patch('/users/admin/:id', async (req, res) => {
 
