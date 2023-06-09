@@ -32,6 +32,7 @@ async function run() {
 
     const menudatabase = client.db('scools').collection('menu');
     const cartsdatabase = client.db('scools').collection('carts')
+    const userssdatabase = client.db('scools').collection('users')
     app.get('/data', async (req, res) => {
 
       //const result = await collection.find().sort({ price: 1 }).toArray();
@@ -65,12 +66,24 @@ async function run() {
       res.send(result);
     })
 
+
+
     app.delete('/carts/:id',async(req,res)=>{
       const id = req.params.id;
       const query ={_id : new ObjectId(id)};
       const result = await cartsdatabase.deleteOne(query);
       res.send(result);
     })
+
+
+
+    // users collection 
+
+   app.post('/users',async(req,res)=>{
+    const user = req.body;
+    const result = await userssdatabase.insertOne(user);
+    res.send(result);
+   })
 
 
     await client.db("admin").command({ ping: 1 });
