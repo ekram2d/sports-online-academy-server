@@ -24,10 +24,10 @@ const verfyJWT = (req, res, next) => {
       return res.status(401).send({ error: true, message: 'unathorization access' })
     }
     req.decoded = decoded;
-    next();
+   
   })
 
-
+  next();
 }
 
 
@@ -145,17 +145,33 @@ async function run() {
       const result = await userssdatabase.insertOne(user);
       res.send(result);
     })
+    app.get('/users/instructor/:email', verfyJWT,async (req, res) => {
+      const email = req.params.email;
+      console.log(email)
+      if (req.decoded.email !== email) {
+        return res.send({ instructor: false })
+      }
+      console.log(email)
+      const query = { email: email }
+      const user = await userssdatabase.findOne(query);
+      const result = { instructor: user?.role === 'instructor' }
+      console.log(result);
+      return res.send(result)
+
+    })
     app.get('/users/admin/:email', verfyJWT, async (req, res) => {
       const email = req.params.email;
       if (req.decoded.email !== email) {
-        res.send({ admin: false })
+       return res.send({ admin: false })
       }
       const query = { email: email }
       const user = await userssdatabase.findOne(query);
       const result = { admin: user?.role === 'admin' }
-      res.send(result)
+      console.log(result);
+      return res.send(result)
 
     })
+  
 
     app.patch('/users/admin/:id', async (req, res) => {
 
