@@ -56,6 +56,8 @@ async function run() {
     //     await client.connect();
     // Send a ping to confirm a successful connection
 
+
+
     const menudatabase = client.db('scools').collection('menu');
     const cartsdatabase = client.db('scools').collection('carts')
     const userssdatabase = client.db('scools').collection('users')
@@ -74,6 +76,28 @@ async function run() {
       })
       res.send({ token })
     })
+   
+
+    const verifyAdmin =async (req,res,next)=>{
+      const email = req.decoded.email;
+      const query ={email:email}
+      const user = await userssdatabase.findOne(query);
+      if(user?.role !=='admin'){
+        return res.status(403).send({ error: true, message: 'forbidden access' })
+      }
+    next();
+    }
+    const verifyInstructor =async (req,res,next)=>{
+      const email = req.decoded.email;
+      const query ={email:email}
+      const user = await userssdatabase.findOne(query);
+      if(user?.role !=='instructor'){
+        return res.status(403).send({ error: true, message: 'forbidden access' })
+      }
+    next();
+    }
+
+
 
     app.get('/data', async (req, res) => {
 
@@ -128,7 +152,7 @@ async function run() {
 
 
 
-    app.get('/users', async (req, res) => {
+    app.get('/users', verfyJWT,verifyAdmin, async (req, res) => {
 
       const result = await userssdatabase.find().toArray();
       res.send(result);
@@ -147,15 +171,15 @@ async function run() {
     })
     app.get('/users/instructor/:email', verfyJWT,async (req, res) => {
       const email = req.params.email;
-      console.log(email)
+      // console.log(email)
       if (req.decoded.email !== email) {
         return res.send({ instructor: false })
       }
-      console.log(email)
+      // console.log(email)
       const query = { email: email }
       const user = await userssdatabase.findOne(query);
       const result = { instructor: user?.role === 'instructor' }
-      console.log(result);
+      // console.log(result);
       return res.send(result)
 
     })
@@ -167,7 +191,7 @@ async function run() {
       const query = { email: email }
       const user = await userssdatabase.findOne(query);
       const result = { admin: user?.role === 'admin' }
-      console.log(result);
+      // console.log(result);
       return res.send(result)
 
     })
