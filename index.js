@@ -98,13 +98,53 @@ async function run() {
     }
 
 
-
+   //coure related class data
     app.get('/data', async (req, res) => {
 
       //const result = await collection.find().sort({ price: 1 }).toArray();
       const result = await menudatabase.find().sort({ availableSeats: 1 }).toArray();
       res.send(result);
     })
+//class added method
+ app.post('/data',verfyJWT,verifyInstructor, async(req,res)=>{
+  const newClass = req.body;
+  console.log(newClass);
+  const result = await menudatabase.insertOne(newClass);
+  
+  res.send(result);
+ })
+
+ // instratuctor class 
+ app.get('/allclass',verfyJWT,verifyInstructor, async (req, res) => {
+  const useremail = req.query.email;
+
+  // if (!useremail) {
+  //   res.send([]);
+  // }
+  // const decodedEmail = req.decoded.email;
+  // if (useremail != decodedEmail) {
+
+  //   return res.status(403).send({ error: true, message: 'porviden access' })
+  // }
+  const query = {email: useremail }
+  console.log(query)
+
+  const result = await menudatabase.find(query).toArray();
+  // console.log('quuum',result)  
+  res.send(result);
+
+
+})
+
+
+
+
+
+
+
+
+
+
 
 
 
