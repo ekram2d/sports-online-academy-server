@@ -127,7 +127,7 @@ async function run() {
   //   return res.status(403).send({ error: true, message: 'porviden access' })
   // }
   const query = {email: useremail }
-  console.log(query)
+  // console.log(query)
 
   const result = await menudatabase.find(query).toArray();
   // console.log('quuum',result)  
@@ -236,6 +236,24 @@ async function run() {
 
     })
   
+
+    app.patch('/status/admin/:id', async (req, res) => {
+
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+
+      // console.log(filter)
+      const updateDoc = {
+        $set: {
+          status:req.body.field1
+        },
+      };
+      // console.log(req.body.field1);
+      const result = await menudatabase.updateOne(filter, updateDoc);
+      // console.log(result);
+      res.send(result);
+
+    })
 
     app.patch('/users/admin/:id', async (req, res) => {
 
