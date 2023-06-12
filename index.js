@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const cors = require('cors');
 require('dotenv').config();
+const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY)
 
 const port = process.env.PORT || 5001
 
@@ -24,7 +25,7 @@ const verfyJWT = (req, res, next) => {
       return res.status(401).send({ error: true, message: 'unathorization access' })
     }
     req.decoded = decoded;
-   
+
   })
 
   next();
@@ -61,6 +62,7 @@ async function run() {
     const menudatabase = client.db('scools').collection('menu');
     const cartsdatabase = client.db('scools').collection('carts')
     const userssdatabase = client.db('scools').collection('users')
+    const enrolldatabase = client.db('scools').collection('enroll')
 
 
 
@@ -76,65 +78,65 @@ async function run() {
       })
       res.send({ token })
     })
-   
 
-    const verifyAdmin =async (req,res,next)=>{
-      const email = req.decoded.email;
-      const query ={email:email}
+
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded?.email;
+      const query = { email: email }
       const user = await userssdatabase.findOne(query);
-      if(user?.role !=='admin'){
+      if (user?.role !== 'admin') {
         return res.status(403).send({ error: true, message: 'forbidden access' })
       }
-    next();
+      next();
     }
-    const verifyInstructor =async (req,res,next)=>{
-      const email = req.decoded.email;
-      const query ={email:email}
+    const verifyInstructor = async (req, res, next) => {
+      const email = req.decoded?.email;
+      const query = { email: email }
       const user = await userssdatabase.findOne(query);
-      if(user?.role !=='instructor'){
+      if (user?.role !== 'instructor') {
         return res.status(403).send({ error: true, message: 'forbidden access' })
       }
-    next();
+      next();
     }
 
 
-   //coure related class data
+    //coure related class data
     app.get('/data', async (req, res) => {
 
       //const result = await collection.find().sort({ price: 1 }).toArray();
       const result = await menudatabase.find().sort({ availableSeats: 1 }).toArray();
       res.send(result);
     })
-//class added method
- app.post('/data',verfyJWT,verifyInstructor, async(req,res)=>{
-  const newClass = req.body;
-  console.log(newClass);
-  const result = await menudatabase.insertOne(newClass);
-  
-  res.send(result);
- })
+    //class added method
+    app.post('/data', verfyJWT, verifyInstructor, async (req, res) => {
+      const newClass = req.body;
+      console.log(newClass);
+      const result = await menudatabase.insertOne(newClass);
 
- // instratuctor class 
- app.get('/allclass',verfyJWT,verifyInstructor, async (req, res) => {
-  const useremail = req.query.email;
+      res.send(result);
+    })
 
-  // if (!useremail) {
-  //   res.send([]);
-  // }
-  // const decodedEmail = req.decoded.email;
-  // if (useremail != decodedEmail) {
+    // instratuctor class 
+    app.get('/allclass', verfyJWT, verifyInstructor, async (req, res) => {
+      const useremail = req.query.email;
 
-  //   return res.status(403).send({ error: true, message: 'porviden access' })
-  // }
-  const query = {email: useremail }
-  // console.log(query)
+      // if (!useremail) {
+      //   res.send([]);
+      // }
+      // const decodedEmail = req.decoded.email;
+      // if (useremail != decodedEmail) {
 
-  const result = await menudatabase.find(query).toArray();
-  // console.log('quuum',result)  
-  res.send(result);
+      //   return res.status(403).send({ error: true, message: 'porviden access' })
+      // }
+      const query = { email: useremail }
+      // console.log(query)
+
+      const result = await menudatabase.find(query).toArray();
+      // console.log('quuum',result)  
+      res.send(result);
 
 
-})
+    })
 
 
 
@@ -156,7 +158,7 @@ async function run() {
       if (!useremail) {
         res.send([]);
       }
-      const decodedEmail = req.decoded.email;
+      const decodedEmail = req.decoded?.email;
       if (useremail != decodedEmail) {
 
         return res.status(403).send({ error: true, message: 'porviden access' })
@@ -192,7 +194,7 @@ async function run() {
 
 
 
-    app.get('/users', verfyJWT,verifyAdmin, async (req, res) => {
+    app.get('/users', verfyJWT, verifyAdmin, async (req, res) => {
 
       const result = await userssdatabase.find().toArray();
       res.send(result);
@@ -209,10 +211,10 @@ async function run() {
       const result = await userssdatabase.insertOne(user);
       res.send(result);
     })
-    app.get('/users/instructor/:email', verfyJWT,async (req, res) => {
+    app.get('/users/instructor/:email', verfyJWT, async (req, res) => {
       const email = req.params.email;
       // console.log(email)
-      if (req.decoded.email !== email) {
+      if (req.decoded?.email !== email) {
         return res.send({ instructor: false })
       }
       // console.log(email)
@@ -226,7 +228,7 @@ async function run() {
     app.get('/users/admin/:email', verfyJWT, async (req, res) => {
       const email = req.params.email;
       if (req.decoded.email !== email) {
-       return res.send({ admin: false })
+        return res.send({ admin: false })
       }
       const query = { email: email }
       const user = await userssdatabase.findOne(query);
@@ -235,8 +237,8 @@ async function run() {
       return res.send(result)
 
     })
-  
-    app.patch('/feedback/admin/:id', async (req, res) => {
+
+    app.patch('/feedback/admin/:id', verfyJWT, verifyAdmin, async (req, res) => {
 
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
@@ -244,16 +246,16 @@ async function run() {
       // console.log(filter)
       const updateDoc = {
         $set: {
-          Feedback:req.body.field1
+          Feedback: req.body.field1
         },
       };
-      console.log(req.body.field1);
+      // console.log(req.body.field1);
       const result = await menudatabase.updateOne(filter, updateDoc);
-      console.log(result);
+      // console.log(result);
       res.send(result);
 
     })
-    app.patch('/status/admin/:id', async (req, res) => {
+    app.patch('/status/admin/:id', verfyJWT, verifyAdmin, async (req, res) => {
 
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
@@ -261,7 +263,7 @@ async function run() {
       // console.log(filter)
       const updateDoc = {
         $set: {
-          status:req.body.field1
+          status: req.body.field1
         },
       };
       // console.log(req.body.field1);
@@ -284,6 +286,95 @@ async function run() {
       const result = await userssdatabase.updateOne(filter, updateDoc);
       res.send(result);
 
+    })
+
+    // /update/instructor/${userId}
+
+    // update by instructor 
+
+    app.patch('/update/instructor/:id', verfyJWT, verifyInstructor, async (req, res) => {
+
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          className: req.body.field1,
+          price: req.body.field2,
+          availableSeats: req.body.field3
+        },
+      };
+
+      const result = await menudatabase.updateOne(filter, updateDoc);
+      // console.log(id);
+      // console.log(result)
+
+      res.send(result);
+
+    })
+
+    app.post('/enroll', async (req, res) => {
+      console.log(req.body);
+      try {
+        const enrollData = req.body; // Assuming the request body contains the enrollment data
+       
+        // Insert the enr console. console.log('ki');og('ki');ollData into the enrolldatabase collection
+        const result = await enrolldatabase.insertOne(enrollData);
+    console.log(result);
+        // Send the inserted data as the respons    e 
+        res.send(result);
+      } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('Internal Server Error');
+      }
+    });
+ 
+    app.delete('/enroll/delete/:id', async (req, res) => {
+      const id = req.params.id;
+    // console.log("id",id,req.body.id1);
+      //try {
+        const resultavailbleseats = await menudatabase.findOne({ _id: new ObjectId(id) });
+        resultavailbleseats.availableSeats-= 1;
+    
+    // // Update the document in the MongoDB collection
+      const resultupdate=   await menudatabase.updateOne({ _id: new ObjectId(id) }, { $set: { availableSeats: parseInt(resultavailbleseats.availableSeats) } });
+      console.log("seats",resultupdate);
+      // res.send(resultupdate);
+    //  const result1=await cartsdatabase.findOne()
+    // const result=await cartsdatabase.findOne({_id:new ObjectId(req.body.id1)})
+    //     console.log(result);
+        // res.send(result)
+        const deleteresult = await cartsdatabase.deleteOne({_id:new ObjectId(req.body.id1)})
+        console.log('de',deleteresult);
+    // res.send(deleteresult);
+      //   if (result.deletedCount === 1) {
+      //     res.send({ message: 'Enrollment deleted successfully' });
+      //   } else {
+      //     res.status(404).send({ error: 'Enrollment not found' });
+      //   }
+      // } catch (error) {
+      //   console.error('Error deleting enrollment:', error);
+      //   res.status(500).send('Internal Server Error');
+      //}
+      res.send(deleteresult)
+    });
+    
+  
+
+    // payment related 
+
+    app.post('/create-payment-intent',  async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+      // console.log(amount);
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ['card']
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      })
     })
 
     await client.db("admin").command({ ping: 1 });
