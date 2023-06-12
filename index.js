@@ -13,24 +13,22 @@ app.use(express.json());
 
 const verfyJWT = (req, res, next) => {
   const authorization = req.headers.authorization;
-
-
+  console.log(authorization);
   if (!authorization) {
-    return res.status(401).send({ error: true, message: 'unathorization access' })
+    return res.status(401).send({ error: true, message: 'unauthorized access' });
   }
-
+  // bearer token
   const token = authorization.split(' ')[1];
+
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
     if (err) {
-      return res.status(401).send({ error: true, message: 'unathorization access' })
+      return res.status(401).send({ error: true, message: 'unauthorized access' })
     }
     req.decoded = decoded;
-
+    next();
   })
-
-  next();
+  
 }
-
 
 
 
@@ -71,11 +69,9 @@ async function run() {
     //jwt token send
 
     app.post('/jwt', (req, res) => {
-
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: '1h'
-      })
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+
       res.send({ token })
     })
 
@@ -227,6 +223,7 @@ async function run() {
     })
     app.get('/users/admin/:email', verfyJWT, async (req, res) => {
       const email = req.params.email;
+      console.log(email);
       if (req.decoded.email !== email) {
         return res.send({ admin: false })
       }
@@ -276,6 +273,7 @@ async function run() {
     app.patch('/users/admin/:id', verfyJWT, async (req, res) => {
 
       const id = req.params.id;
+      console.log("id",id)
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
@@ -315,10 +313,10 @@ async function run() {
 
     // enroll related
 
-    app.get('/enroll/data/:email',verfyJWT, async (req, res) => {
+    app.get('/enroll/data/:email', verfyJWT, async (req, res) => {
       const email = req.params.email;
       // console.log(email);
-      
+
       try {
         const query = { userEmail: email }
 
@@ -329,12 +327,12 @@ async function run() {
         res.status(500).send('Internal Server Error');
       }
     });
-    
-    app.post('/enroll',verfyJWT, async (req, res) => {
+
+    app.post('/enroll', verfyJWT, async (req, res) => {
       // console.log(req.body);
       try {
         const enrollData = req.body; // Assuming the request body contains the enrollment data
-        enrollData.availableSeats= parseInt(enrollData.availableSeats)-1
+        enrollData.availableSeats = parseInt(enrollData.availableSeats) - 1
         // Insert the enr console. console.log('ki');og('ki');ollData into the enrolldatabase collection
         const result = await enrolldatabase.insertOne(enrollData);
         // console.log(enrollData.availableSeats);
@@ -346,7 +344,7 @@ async function run() {
       }
     });
 
-    app.delete('/enroll/delete/:id',verfyJWT, async (req, res) => {
+    app.delete('/enroll/delete/:id', verfyJWT, async (req, res) => {
       const id = req.params.id;
       // console.log("id",id,req.body.id1);
       //try {
@@ -375,29 +373,29 @@ async function run() {
       //}
       res.send(deleteresult)
     });
-         
-    app.get("/enroll/data/:className/:email", verfyJWT,verifyInstructor, async (req, res) => {
+
+    app.get("/enroll/data/:className/:email", verfyJWT, verifyInstructor, async (req, res) => {
       const className = req.params.className;
       const email = req.params.email;
-    
+
       try {
         const enrollments = await enrolldatabase.find({
           className: className,
           email: email,
         }).toArray();
-    
+
         res.send(enrollments);
       } catch (error) {
         console.error("Error retrieving enrollments:", error);
         res.status(500).send("Internal Server Error");
       }
     });
-    
+
 
 
     // payment related 
 
-    app.post('/create-payment-intent', async (req, res) => {
+    app.post('/create-payment-intent', verfyJWT, async (req, res) => {
       const { price } = req.body;
       const amount = parseInt(price * 100);
       // console.log(amount);
