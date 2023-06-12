@@ -312,14 +312,32 @@ async function run() {
 
     })
 
+
+    // enroll related
+
+    app.get('/enroll/data/:email', async (req, res) => {
+      const email = req.params.email;
+      // console.log(email);
+      
+      try {
+        const query = { userEmail: email }
+
+        const result = await enrolldatabase.find(query).sort({ data: -1 }).toArray();
+        res.send(result)
+      } catch (error) {
+        console.error('Error retrieving enrollments:', error);
+        res.status(500).send('Internal Server Error');
+      }
+    });
+    
     app.post('/enroll', async (req, res) => {
-      console.log(req.body);
+      // console.log(req.body);
       try {
         const enrollData = req.body; // Assuming the request body contains the enrollment data
-       
+        enrollData.availableSeats= parseInt(enrollData.availableSeats)-1
         // Insert the enr console. console.log('ki');og('ki');ollData into the enrolldatabase collection
         const result = await enrolldatabase.insertOne(enrollData);
-    console.log(result);
+        // console.log(enrollData.availableSeats);
         // Send the inserted data as the respons    e 
         res.send(result);
       } catch (error) {
@@ -327,25 +345,25 @@ async function run() {
         res.status(500).send('Internal Server Error');
       }
     });
- 
+
     app.delete('/enroll/delete/:id', async (req, res) => {
       const id = req.params.id;
-    // console.log("id",id,req.body.id1);
+      // console.log("id",id,req.body.id1);
       //try {
-        const resultavailbleseats = await menudatabase.findOne({ _id: new ObjectId(id) });
-        resultavailbleseats.availableSeats-= 1;
-    
-    // // Update the document in the MongoDB collection
-      const resultupdate=   await menudatabase.updateOne({ _id: new ObjectId(id) }, { $set: { availableSeats: parseInt(resultavailbleseats.availableSeats) } });
-      console.log("seats",resultupdate);
+      const resultavailbleseats = await menudatabase.findOne({ _id: new ObjectId(id) });
+      resultavailbleseats.availableSeats -= 1;
+
+      // // Update the document in the MongoDB collection
+      const resultupdate = await menudatabase.updateOne({ _id: new ObjectId(id) }, { $set: { availableSeats: parseInt(resultavailbleseats.availableSeats) } });
+      // console.log("seats",resultupdate);
       // res.send(resultupdate);
-    //  const result1=await cartsdatabase.findOne()
-    // const result=await cartsdatabase.findOne({_id:new ObjectId(req.body.id1)})
-    //     console.log(result);
-        // res.send(result)
-        const deleteresult = await cartsdatabase.deleteOne({_id:new ObjectId(req.body.id1)})
-        console.log('de',deleteresult);
-    // res.send(deleteresult);
+      //  const result1=await cartsdatabase.findOne()
+      // const result=await cartsdatabase.findOne({_id:new ObjectId(req.body.id1)})
+      //     console.log(result);
+      // res.send(result)
+      const deleteresult = await cartsdatabase.deleteOne({ _id: new ObjectId(req.body.id1) })
+      // console.log('de',deleteresult);
+      // res.send(deleteresult);
       //   if (result.deletedCount === 1) {
       //     res.send({ message: 'Enrollment deleted successfully' });
       //   } else {
@@ -357,12 +375,12 @@ async function run() {
       //}
       res.send(deleteresult)
     });
-    
-  
+
+
 
     // payment related 
 
-    app.post('/create-payment-intent',  async (req, res) => {
+    app.post('/create-payment-intent', async (req, res) => {
       const { price } = req.body;
       const amount = parseInt(price * 100);
       // console.log(amount);
