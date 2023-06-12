@@ -273,7 +273,7 @@ async function run() {
 
     })
 
-    app.patch('/users/admin/:id', async (req, res) => {
+    app.patch('/users/admin/:id', verfyJWT, async (req, res) => {
 
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
@@ -315,7 +315,7 @@ async function run() {
 
     // enroll related
 
-    app.get('/enroll/data/:email', async (req, res) => {
+    app.get('/enroll/data/:email',verfyJWT, async (req, res) => {
       const email = req.params.email;
       // console.log(email);
       
@@ -330,7 +330,7 @@ async function run() {
       }
     });
     
-    app.post('/enroll', async (req, res) => {
+    app.post('/enroll',verfyJWT, async (req, res) => {
       // console.log(req.body);
       try {
         const enrollData = req.body; // Assuming the request body contains the enrollment data
@@ -346,7 +346,7 @@ async function run() {
       }
     });
 
-    app.delete('/enroll/delete/:id', async (req, res) => {
+    app.delete('/enroll/delete/:id',verfyJWT, async (req, res) => {
       const id = req.params.id;
       // console.log("id",id,req.body.id1);
       //try {
@@ -375,7 +375,24 @@ async function run() {
       //}
       res.send(deleteresult)
     });
-
+         
+    app.get("/enroll/data/:className/:email", verfyJWT,verifyInstructor, async (req, res) => {
+      const className = req.params.className;
+      const email = req.params.email;
+    
+      try {
+        const enrollments = await enrolldatabase.find({
+          className: className,
+          email: email,
+        }).toArray();
+    
+        res.send(enrollments);
+      } catch (error) {
+        console.error("Error retrieving enrollments:", error);
+        res.status(500).send("Internal Server Error");
+      }
+    });
+    
 
 
     // payment related 
